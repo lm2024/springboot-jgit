@@ -1,0 +1,21 @@
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+logs/
+agent/logs/
+master/logs/
+*.log
+
+# Build outputs (Maven/Java)
+**/target/
+*.jar
+
+# Misc
+*.iml
+*.class
+
