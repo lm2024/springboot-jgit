@@ -9,6 +9,7 @@ import org.springframework.data.redis.connection.jedis.JedisClientConfiguration;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import redis.clients.jedis.JedisPoolConfig;
 import java.time.Duration;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -120,6 +121,19 @@ public class JedisConfig {
         template.setValueSerializer(serializer);
         template.setHashValueSerializer(serializer);
         
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    /**
+     * 配置StringRedisTemplate（便于写入纯字符串/JSON字符串）
+     */
+    @Bean
+    public StringRedisTemplate stringRedisTemplate() {
+        StringRedisTemplate template = new StringRedisTemplate();
+        template.setConnectionFactory(jedisConnectionFactory());
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new StringRedisSerializer());
         template.afterPropertiesSet();
         return template;
     }

@@ -11,7 +11,6 @@ import com.redis.jedis.util.RedisStandaloneClient;
 import redis.clients.jedis.JedisPoolConfig;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -29,6 +28,10 @@ public class JedisConfig {
 
     @Value("${redis.cluster.timeout:5000}")
     private int timeout;
+
+    // JedisCluster 读写超时（可与 timeout 一致）
+    @Value("${redis.cluster.so-timeout:5000}")
+    private int soTimeout;
 
     @Value("${redis.cluster.max-redirects:3}")
     private int maxRedirects;
@@ -80,6 +83,11 @@ public class JedisConfig {
             poolConfig.setTestOnReturn(true);
             poolConfig.setTestWhileIdle(true);
 
+            if (password != null && !password.trim().isEmpty()) {
+                // 带密码的 JedisCluster 构造
+                return new RedisClusterClient(new JedisCluster(nodes, timeout, soTimeout, maxRedirects, password, poolConfig));
+            }
+            // 无密码的 JedisCluster 构造
             return new RedisClusterClient(new JedisCluster(nodes, timeout, maxRedirects, poolConfig));
         }
 

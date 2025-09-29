@@ -5,20 +5,13 @@ server:
 spring:
   application:
     name: master-node
-
-# Redis集群配置
-redis:
-  cluster:
-    nodes: localhost:7001,localhost:7002,localhost:7003,localhost:7004,localhost:7005,localhost:7006,localhost:7007,localhost:7008
+  # 单机Redis配置（当 redis.cluster.nodes 为空时生效）
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 0
     password: 
     timeout: 5000
-    max-redirects: 3
-  jedis:
-    pool:
-      max-active: 20
-      max-idle: 10
-      min-idle: 5
-      max-wait: 3000
 
 # 监控配置
 monitor:
