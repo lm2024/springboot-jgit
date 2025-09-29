@@ -6,6 +6,7 @@
 /Users/lm/Documents/projects/springboot-jgit/cursor/master/src/main/java/com/redis/jedis/controller/MonitorController.java
 /Users/lm/Documents/projects/springboot-jgit/cursor/master/src/main/java/com/redis/jedis/service/BuildService.java
 /Users/lm/Documents/projects/springboot-jgit/cursor/master/src/main/java/com/redis/jedis/service/LogService.java
+/Users/lm/Documents/projects/springboot-jgit/cursor/master/src/main/java/com/redis/jedis/controller/OpenApiCompatibilityController.java
 /Users/lm/Documents/projects/springboot-jgit/cursor/master/src/main/java/com/redis/jedis/dto/ApiResponse.java
 /Users/lm/Documents/projects/springboot-jgit/cursor/master/src/main/java/com/redis/jedis/service/DirectoryService.java
 /Users/lm/Documents/projects/springboot-jgit/cursor/master/src/main/java/com/redis/jedis/service/MonitorService.java
