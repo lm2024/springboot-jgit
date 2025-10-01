@@ -1,0 +1,11 @@
+bug记录
+// 问题：获取节点详情失败: 节点不存在: node001
+/api/monitor/nodes/{nodeId}
+{
+  "success": false,
+  "message": "节点不存在: node001",
+  "data": null,
+  "timestamp": 1759269960557
+}
+
+

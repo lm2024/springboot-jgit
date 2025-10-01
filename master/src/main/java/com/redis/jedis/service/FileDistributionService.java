@@ -1,5 +1,7 @@
 package com.redis.jedis.service;
 
+import com.redis.jedis.util.RedisClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -10,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Base64;
 import java.util.List;
 
 /**
@@ -30,6 +33,9 @@ public class FileDistributionService {
     
     @Value("${deploy.file-transfer.use-shared-dir:true}")
     private boolean useSharedDir;
+    
+    @Autowired
+    private RedisClient jedisCluster;
     
     /**
      * 选择文件分发方式
@@ -199,8 +205,31 @@ public class FileDistributionService {
      * 发送文件到Agent节点
      */
     private void sendFileToAgents(byte[] fileContent, String fileName, List<String> targetNodes) {
-        // TODO: 通过Redis发送文件内容到Agent节点
-        // 这里先空实现，后续实现
+        try {
+            System.out.println("FileDistribution: 开始通过Redis发送文件: " + fileName);
+            System.out.println("FileDistribution: 文件大小: " + fileContent.length + " bytes");
+            System.out.println("FileDistribution: 目标节点: " + targetNodes);
+            
+            // 将文件内容编码为Base64
+            String encodedContent = Base64.getEncoder().encodeToString(fileContent);
+            System.out.println("FileDistribution: Base64编码后大小: " + encodedContent.length() + " 字符");
+            
+            // 将文件内容存储到Redis，使用文件名作为键
+            String redisKey = fileName;
+            jedisCluster.set(redisKey, encodedContent);
+            System.out.println("FileDistribution: 文件已存储到Redis，键名: " + redisKey);
+            
+            // 设置过期时间（1小时）
+            jedisCluster.expire(redisKey, 3600);
+            System.out.println("FileDistribution: 设置Redis键过期时间: 1小时");
+            
+            System.out.println("FileDistribution: 文件发送完成");
+            
+        } catch (Exception e) {
+            System.err.println("FileDistribution: 发送文件到Agent节点失败: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("发送文件到Agent节点失败: " + e.getMessage());
+        }
     }
     
     /**

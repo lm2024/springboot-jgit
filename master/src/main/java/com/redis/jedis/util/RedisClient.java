@@ -5,6 +5,7 @@ import java.util.Set;
 
 public interface RedisClient {
     String get(String key);
+    void set(String key, String value);
     void setex(String key, int seconds, String value);
     void expire(String key, int seconds);
     void sadd(String key, String member);

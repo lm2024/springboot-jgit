@@ -7,12 +7,16 @@ package com.redis.jedis.dto;
 public class ServiceStatus {
     
     private String serviceName; // 服务名称
+    private String nodeId; // 节点ID
     private boolean running; // 是否运行
+    private boolean healthy; // 是否健康
     private String pid; // 进程ID
     private long uptime; // 运行时间
     private double cpuUsage; // CPU使用率
     private double memoryUsage; // 内存使用率
     private String status; // 状态描述
+    private String message; // 状态消息
+    private long checkTime; // 检查时间
     private long lastDeployTime; // 最近部署时间
     private String lastDeployVersion; // 最近部署版本
     
@@ -95,5 +99,37 @@ public class ServiceStatus {
     
     public void setLastDeployVersion(String lastDeployVersion) {
         this.lastDeployVersion = lastDeployVersion;
+    }
+    
+    public String getNodeId() {
+        return nodeId;
+    }
+    
+    public void setNodeId(String nodeId) {
+        this.nodeId = nodeId;
+    }
+    
+    public boolean isHealthy() {
+        return healthy;
+    }
+    
+    public void setHealthy(boolean healthy) {
+        this.healthy = healthy;
+    }
+    
+    public String getMessage() {
+        return message;
+    }
+    
+    public void setMessage(String message) {
+        this.message = message;
+    }
+    
+    public long getCheckTime() {
+        return checkTime;
+    }
+    
+    public void setCheckTime(long checkTime) {
+        this.checkTime = checkTime;
     }
 }

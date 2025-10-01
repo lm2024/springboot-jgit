@@ -1,21 +1,25 @@
-# Agent节点配置
+# ===========================================
+# Agent节点配置 - 分布式服务监控与部署系统
+# ===========================================
+
+# 服务器配置
 server:
-  port: 8081
+  port: 8081  # 【需要自定义】Agent节点端口，避免与Master(8080)和文件服务器(8081)冲突
 
 spring:
   application:
-    name: agent-node
+    name: agent-node  # 【需要自定义】应用名称，用于服务发现和标识
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
   
-  # Redis配置（支持 spring.redis.* 单机形式）
+  # Redis配置 - 与Master节点使用相同的Redis
   redis:
-    host: 127.0.0.1
-    port: 6379
-    database: 0
-    password: 
-    timeout: 5000
+    host: 127.0.0.1  # 【需要自定义】Redis服务器地址，与Master保持一致
+    port: 6379       # 【需要自定义】Redis端口，与Master保持一致
+    database: 0      # 【可选自定义】Redis数据库编号，与Master保持一致
+    password:        # 【需要自定义】Redis密码，与Master保持一致
+    timeout: 5000    # 【可选自定义】连接超时时间(毫秒)
     lettuce:
       pool:
         max-active: 20
@@ -25,8 +29,8 @@ spring:
 
 # 节点标识
 node:
-  id: node001
-  name: Agent Node 001
+  id: node001        # 【需要自定义】Agent节点唯一标识，Master配置中要使用此ID
+  name: Agent Node 001  # 【可选自定义】Agent节点显示名称
 
  
 
@@ -38,13 +42,13 @@ monitor:
 # 部署配置
 deploy:
   agent:
-    workspace: /opt/agent/workspace
-    services: /opt/agent/services
-    backup: /opt/agent/backup
-    logs: /opt/agent/logs
-  jar-backup-dir: /opt/backup
-  jar-deploy-dir: /opt/services
-  jar-shared-dir: /opt/shared/jars
+    workspace: /tmp/agent/workspace    # 【需要自定义】Agent工作空间目录
+    services: /tmp/agent/services      # 【需要自定义】服务运行目录
+    backup: /tmp/agent/backup          # 【需要自定义】备份目录
+    logs: /tmp/agent/logs              # 【需要自定义】日志目录
+  jar-backup-dir: /tmp/backup          # 【需要自定义】JAR包备份目录
+  jar-deploy-dir: /tmp/services        # 【需要自定义】JAR包部署目录，与Master保持一致
+  jar-shared-dir: /tmp/shared/jars     # 【需要自定义】JAR包共享目录，与Master保持一致
 
 # 服务管理配置
 service-management:
@@ -57,11 +61,11 @@ service-management:
 file-receive:
   shared-storage:
     enabled: true
-    path: /opt/shared/storage
+    path: /tmp/shared/storage        # 【需要自定义】共享存储路径，与Master保持一致
   http-download:
     enabled: true
     timeout: 300000  # 5分钟
-  temp-dir: /tmp/agent-downloads
+  temp-dir: /tmp/agent-downloads     # 【需要自定义】临时下载目录
 
 # 日志配置
 logging:

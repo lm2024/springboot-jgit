@@ -1,18 +1,16 @@
 package com.redis.jedis.service;
 
+import com.redis.jedis.config.GitRepositoryConfig;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * Git服务
@@ -21,41 +19,79 @@ import java.nio.file.Paths;
 @Service
 public class GitService {
     
-    @Value("${deploy.git.workspace}")
+    @Autowired
+    private GitRepositoryConfig gitConfig;
+    
+    @Value("${git.workspace}")
     private String workspace;
     
-    @Value("${deploy.git.default-branch:master}")
+    @Value("${git.default-branch:master}")
     private String defaultBranch;
     
-    @Value("${deploy.git.username:}")
+    @Value("${git.username:}")
     private String username;
     
-    @Value("${deploy.git.password:}")
+    @Value("${git.password:}")
     private String password;
+    
+    /**
+     * 根据项目名称克隆或拉取代码
+     */
+    public String cloneOrPullByProjectName(String projectName) throws Exception {
+        System.out.println("Git服务: 开始处理项目 " + projectName);
+        
+        GitRepositoryConfig.RepositoryInfo repoInfo = gitConfig.getRepositoryByName(projectName);
+        if (repoInfo == null) {
+            System.err.println("Git服务错误: 未找到项目配置: " + projectName);
+            throw new RuntimeException("未找到项目配置: " + projectName);
+        }
+        
+        System.out.println("Git服务: 找到项目配置");
+        System.out.println("  - URL: " + repoInfo.getUrl());
+        System.out.println("  - 分支: " + repoInfo.getBranch());
+        
+        return cloneOrPull(repoInfo.getUrl(), repoInfo.getBranch());
+    }
     
     /**
      * 克隆或拉取代码
      */
     public String cloneOrPull(String gitUrl, String branch) throws Exception {
+        System.out.println("Git服务: 开始Git操作");
+        System.out.println("  - Git URL: " + gitUrl);
+        System.out.println("  - 分支: " + branch);
+        System.out.println("  - 工作空间: " + workspace);
+        
         try {
             // 确保工作空间目录存在
             File workspaceDir = new File(workspace);
+            System.out.println("Git服务: 检查工作空间目录: " + workspaceDir.getAbsolutePath());
+            
             if (!workspaceDir.exists()) {
+                System.out.println("Git服务: 创建工作空间目录");
                 Files.createDirectories(workspaceDir.toPath());
+            } else {
+                System.out.println("Git服务: 工作空间目录已存在");
             }
             
             String projectName = extractProjectName(gitUrl);
+            System.out.println("Git服务: 提取项目名称: " + projectName);
+            
             File projectDir = new File(workspaceDir, projectName);
+            System.out.println("Git服务: 项目目录: " + projectDir.getAbsolutePath());
             
             if (projectDir.exists()) {
-                // 拉取最新代码
+                System.out.println("Git服务: 项目目录已存在，执行拉取操作");
                 return pullLatestCode(projectDir, branch);
             } else {
-                // 克隆代码
+                System.out.println("Git服务: 项目目录不存在，执行克隆操作");
                 return cloneRepository(gitUrl, branch, projectDir);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Git操作失败: " + e.getMessage());
+            System.err.println("Git服务错误: Git操作失败");
+            System.err.println("错误详情: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Git操作失败: " + e.getMessage(), e);
         }
     }
     
@@ -63,20 +99,34 @@ public class GitService {
      * 克隆仓库
      */
     private String cloneRepository(String gitUrl, String branch, File projectDir) throws GitAPIException {
+        System.out.println("Git服务: 开始克隆仓库");
+        System.out.println("  - 原始URL: " + gitUrl);
+        System.out.println("  - 分支: " + branch);
+        System.out.println("  - 目标目录: " + projectDir.getAbsolutePath());
+        
         try {
             // 构建带认证的URL
             String authUrl = buildAuthUrl(gitUrl);
+            System.out.println("Git服务: 构建认证URL完成");
             
-            Git.cloneRepository()
+            System.out.println("Git服务: 执行Git克隆命令...");
+            Git git = Git.cloneRepository()
                 .setURI(authUrl)
                 .setBranch(branch)
                 .setDirectory(projectDir)
                 .call();
             
-            System.out.println("代码克隆成功: " + gitUrl + " -> " + projectDir.getAbsolutePath());
+            System.out.println("Git服务: 代码克隆成功");
+            System.out.println("  - 源: " + gitUrl);
+            System.out.println("  - 目标: " + projectDir.getAbsolutePath());
+            
+            git.close();
             return projectDir.getAbsolutePath();
         } catch (Exception e) {
-            throw new RuntimeException("克隆仓库失败: " + e.getMessage());
+            System.err.println("Git服务错误: 克隆仓库失败");
+            System.err.println("错误详情: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("克隆仓库失败: " + e.getMessage(), e);
         }
     }
     
@@ -84,20 +134,33 @@ public class GitService {
      * 拉取最新代码
      */
     private String pullLatestCode(File projectDir, String branch) throws Exception {
+        System.out.println("Git服务: 开始拉取最新代码");
+        System.out.println("  - 项目目录: " + projectDir.getAbsolutePath());
+        System.out.println("  - 分支: " + branch);
+        
         try (Git git = Git.open(projectDir)) {
+            System.out.println("Git服务: 打开Git仓库成功");
+            
             // 切换到指定分支
+            System.out.println("Git服务: 切换到分支 " + branch);
             git.checkout()
                 .setName(branch)
                 .call();
+            System.out.println("Git服务: 分支切换成功");
             
             // 拉取最新代码
+            System.out.println("Git服务: 执行Git拉取操作...");
             PullCommand pullCommand = git.pull();
             pullCommand.call();
             
-            System.out.println("代码拉取成功: " + projectDir.getAbsolutePath());
+            System.out.println("Git服务: 代码拉取成功");
+            System.out.println("  - 目录: " + projectDir.getAbsolutePath());
             return projectDir.getAbsolutePath();
         } catch (Exception e) {
-            throw new RuntimeException("拉取代码失败: " + e.getMessage());
+            System.err.println("Git服务错误: 拉取代码失败");
+            System.err.println("错误详情: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("拉取代码失败: " + e.getMessage(), e);
         }
     }
     
@@ -259,6 +322,20 @@ public class GitService {
         public void setLastCommitTime(int lastCommitTime) {
             this.lastCommitTime = lastCommitTime;
         }
+    }
+    
+    /**
+     * 获取所有配置的仓库信息
+     */
+    public java.util.List<GitRepositoryConfig.RepositoryInfo> getAllRepositories() {
+        return gitConfig.getRepositories();
+    }
+    
+    /**
+     * 获取指定项目的仓库信息
+     */
+    public GitRepositoryConfig.RepositoryInfo getRepositoryInfo(String projectName) {
+        return gitConfig.getRepositoryByName(projectName);
     }
     
     /**

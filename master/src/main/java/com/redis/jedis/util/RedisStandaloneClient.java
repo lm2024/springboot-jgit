@@ -33,6 +33,9 @@ public class RedisStandaloneClient implements RedisClient {
     public String get(String key) { return withJedis(j -> j.get(key)); }
 
     @Override
+    public void set(String key, String value) { withJedis(j -> { j.set(key, value); return null; }); }
+
+    @Override
     public void setex(String key, int seconds, String value) { withJedis(j -> { j.setex(key, seconds, value); return null; }); }
 
     @Override

@@ -1,83 +1,136 @@
-# Master节点配置
+# ===========================================
+# Master节点配置 - 分布式服务监控与部署系统
+# 配置顺序：Spring基础配置 → 代码下载 → 代码编译 → 文件分发 → 服务部署 → 监控日志
+# ===========================================
+
+# ===========================================
+# 1. Spring基础配置
+# ===========================================
+
+# 服务器配置
 server:
-  port: 8080
+  port: 8080  # 【需要自定义】Master节点端口，确保不与Agent节点冲突
 
 spring:
   application:
-    name: master-node
-  # 单机Redis配置（当 redis.cluster.nodes 为空时生效）
-  redis:
-    host: 127.0.0.1
-    port: 6379
-    database: 0
-    password: 
-    timeout: 5000
-
-# 监控配置
-monitor:
-  report-interval: 30000
-  health-check-timeout: 5000
-
-# 部署配置
-deploy:
-  master:
-    workspace: /tmp/deploy/workspace
-    build: /tmp/deploy/build
-    distribute: /tmp/deploy/distribute
-    backup: /tmp/deploy/backup
-    logs: /tmp/deploy/logs
-  jar-backup-dir: /tmp/backup
-  jar-deploy-dir: /tmp/services
-  jar-shared-dir: /tmp/shared/jars
-  max-backup-versions: 5
+    name: master-node  # 【需要自定义】应用名称，用于服务发现和标识
   
-  git:
-    workspace: /Users/lm/Documents/projects
-    default-branch: dev
-    username: g-test
-    password: Pass123!
-    
-  build:
-    output-dir: /tmp/build-output
-    maven-home: /opt/homebrew/Cellar/maven/3.9.11/libexec
+  # Redis配置 - 用于缓存和消息队列
+  redis:
+    host: 127.0.0.1  # 【需要自定义】Redis服务器地址，生产环境建议使用内网IP
+    port: 6379       # 【需要自定义】Redis端口，确保与Redis服务器配置一致
+    database: 0      # 【可选自定义】Redis数据库编号，0-15
+    password:        # 【需要自定义】Redis密码，生产环境必须设置强密码
+    timeout: 5000    # 【可选自定义】连接超时时间(毫秒)
+
+# ===========================================
+# 2. 代码下载配置 (Git)
+# ===========================================
+
+# Git配置
+git:
+  workspace: /Users/lm/Documents/projects  # 【需要自定义】Git代码仓库本地工作空间
+  default-branch: dev                      # 【需要自定义】默认分支名称
+  username: g-test                         # 【需要自定义】Git用户名
+  password: Pass123!                       # 【需要自定义】Git密码或访问令牌
+  
+  # 项目仓库配置 - 定义要部署的项目
+  repositories:
+    - name: service-abc                      # 【需要自定义】项目名称
+      url: https://git.code.tencent.com/gtest/abc.git  # 【需要自定义】Git仓库URL
+      branch: dev                          # 【需要自定义】分支名称
+      build-command: mvn clean package -DskipTests  # 【需要自定义】构建命令
+      description: "服务ABC项目"
+    # - name: service-b                      # 【需要自定义】项目名称
+    #   url: https://github.com/your-org/service-b.git  # 【需要自定义】Git仓库URL
+    #   branch: main                         # 【需要自定义】分支名称
+    #   build-command: mvn clean package -DskipTests  # 【需要自定义】构建命令
+    #   description: "服务B项目"
+
+# ===========================================
+# 3. 代码编译配置 (Maven)
+# ===========================================
+
+# 构建配置
+build:
+  output-dir: /tmp/build-output                    # 【需要自定义】Maven构建输出目录
+  maven-home: /opt/homebrew/Cellar/maven/3.9.11/libexec  # 【需要自定义】Maven安装路径
+
+# ===========================================
+# 4. 文件分发配置
+# ===========================================
 
 # 文件分发配置
 file-distribution:
+  # 共享存储配置
   shared-storage:
-    enabled: true
-    path: /tmp/shared/storage
+    enabled: true                    # 【可选自定义】是否启用共享存储
+    path: /tmp/shared/storage        # 【需要自定义】共享存储路径，建议使用NFS或云存储
+  
+  # HTTP文件服务器配置
   http-server:
-    enabled: true
-    port: 8081
-    base-path: /tmp/http-files
+    enabled: true                    # 【可选自定义】是否启用HTTP文件服务器
+    port: 8081                       # 【需要自定义】HTTP文件服务器端口，确保不与Master端口冲突
+    base-path: /tmp/http-files       # 【需要自定义】HTTP文件服务器根目录
+  
+  # Redis文件存储配置
   redis:
-    enabled: false
-    max-file-size: 10485760  # 10MB
+    enabled: false                   # 【可选自定义】是否启用Redis存储文件（小文件）
+    max-file-size: 10485760         # 【可选自定义】Redis最大文件大小(字节)，默认10MB
 
-# 服务配置
+# ===========================================
+# 5. 服务部署配置
+# ===========================================
+
+# 部署配置
+deploy:
+  # Master节点工作目录配置
+  master:
+    workspace: /tmp/deploy/workspace    # 【需要自定义】代码拉取和构建工作空间
+    build: /tmp/deploy/build           # 【需要自定义】构建输出目录
+    distribute: /tmp/deploy/distribute # 【需要自定义】文件分发临时目录
+    backup: /tmp/deploy/backup         # 【需要自定义】备份文件存储目录
+    logs: /tmp/deploy/logs             # 【需要自定义】部署日志存储目录
+  
+  # JAR包管理配置
+  jar-backup-dir: /tmp/backup          # 【需要自定义】JAR包备份目录
+  jar-deploy-dir: /tmp/services        # 【需要自定义】JAR包部署目录
+  jar-shared-dir: /tmp/shared/jars     # 【需要自定义】JAR包共享存储目录
+  max-backup-versions: 5               # 【可选自定义】最大备份版本数，用于版本回滚
+
+# 服务配置 - 定义要部署的服务列表
 services:
-  - name: service-a
-    jar-name: service-a.jar
-    jar-path: /tmp/services/service-a.jar
-    target-nodes: ["agent-1", "agent-2"]
-    description: "服务A"
-  - name: service-b
-    jar-name: service-b.jar
-    jar-path: /tmp/services/service-b.jar
-    target-nodes: ["agent-1", "agent-3"]
-    description: "服务B"
+  - name: service-abc                  # 【需要自定义】服务名称，用于标识和部署
+    jar-name: abc-1.0.0.jar         # 【需要自定义】JAR包文件名
+    jar-path: /tmp/deploy/distribute/service-abc/abc-1.0.0.jar  # 【需要自定义】JAR包完整路径
+    target-nodes: ["node001"]  # 【需要自定义】目标Agent节点列表，使用你的Agent节点ID
+    description: "服务ABC"             # 【可选自定义】服务描述信息
+  # - name: service-b                  # 【需要自定义】服务名称
+  #   jar-name: service-b.jar         # 【需要自定义】JAR包文件名
+  #   jar-path: /tmp/services/service-b.jar  # 【需要自定义】JAR包完整路径
+  #   target-nodes: ["agent-1", "agent-3"]  # 【需要自定义】目标Agent节点列表
+  #   description: "服务B"             # 【可选自定义】服务描述信息
 
-# Springfox配置
+# ===========================================
+# 6. 监控和日志配置
+# ===========================================
+
+# 监控配置
+monitor:
+  report-interval: 30000      # 【可选自定义】Agent节点状态报告间隔(毫秒)，默认30秒
+  health-check-timeout: 5000  # 【可选自定义】健康检查超时时间(毫秒)，默认5秒
+
+# API文档配置
 springfox:
   documentation:
     swagger-ui:
-      enabled: true
-    enabled: true
+      enabled: true                  # 【可选自定义】是否启用Swagger UI
+    enabled: true                    # 【可选自定义】是否启用API文档
 
 # 日志配置
 logging:
   file:
-    name: logs/master.log
+    name: logs/master.log           # 【可选自定义】日志文件路径
   level:
-    com.redis.jedis: INFO
-    root: INFO
+    com.redis.jedis: INFO           # 【可选自定义】应用日志级别
+    root: INFO                      # 【可选自定义】根日志级别
